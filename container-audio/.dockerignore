@@ -1,0 +1,10 @@
+.env
+.git
+__pycache__/
+*.pyc
+results/
+hf-cache/
+fine_tuned_deepfake_detector/
+*.wav
+*.mp3
+*.flac
