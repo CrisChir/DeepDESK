@@ -1,13 +1,10 @@
+import gradio as gr
 from fastapi import Depends, FastAPI, File, HTTPException, Security, UploadFile, status
 from fastapi.security.api_key import APIKeyHeader
 
-from .config import (
-    ALLOWED_EXTENSIONS,
-    API_KEY,
-    API_KEY_NAME,
-    MAX_UPLOAD_MB,
-)
+from .config import ALLOWED_EXTENSIONS, API_KEY, API_KEY_NAME, MAX_UPLOAD_MB
 from .inference import predict
+from .ui import demo
 
 app = FastAPI(title="Secure Deepfake Detection API")
 
@@ -25,7 +22,12 @@ async def get_api_key(api_key: str = Security(api_key_header)) -> str:
 
 @app.get("/")
 async def home():
-    return {"message": "API is Online. Use /docs to authenticate and test."}
+    return {
+        "message": "API is Online. Use /docs for the API or /gradio for the web UI.",
+    }
+
+
+app = gr.mount_gradio_app(app, demo, path="/gradio")
 
 
 @app.post("/predict", dependencies=[Depends(get_api_key)])
