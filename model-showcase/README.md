@@ -52,6 +52,10 @@ model-showcase/
 │   ├── catalog.py       # catalogul de modele pentru tab-ul Showcase
 │   ├── config.py        # configurare prin variabile de mediu
 │   └── media_info.py    # rezoluție / FPS / durată pentru fișierele încărcate
+├── scripts/
+│   ├── porneste-showcase-hub.command   # comandă rapidă de pornire (macOS, dublu-click)
+│   ├── opreste-showcase-hub.command    # comandă rapidă de oprire (macOS, dublu-click)
+│   └── README.md                       # instalarea și personalizarea lor
 ├── docker-compose.yml   # hub + toate backend-urile (profiluri)
 ├── Dockerfile           # imaginea hub-ului (python:3.12-slim, CPU)
 ├── requirements.txt
@@ -90,6 +94,10 @@ ai-showcase/
 ├── GenD/
 └── simple_mcd_rppg/
 ```
+
+Ghidul complet de instalare de la zero (Git, Docker, clonare, configurare,
+verificare, depanare) este în
+[../docs/INSTALARE_COMPLETA.md](../docs/INSTALARE_COMPLETA.md).
 
 ### 2. Configurați
 
@@ -130,6 +138,23 @@ Interfața: **http://localhost:7870**
 - Tab-ul **Showcase** afișează starea fiecărui backend (🟢/🔴).
 - Primele rulări GenD descarcă modelul de pe Hugging Face (1–2 GB, cache-ul
   persistă în volumul `gend-hf-cache`).
+
+### 5. Comenzi rapide pe Desktop (opțional, macOS)
+
+Pentru utilizatorii care nu folosesc linia de comandă, dosarul `scripts/`
+conține două comenzi rapide care se execută prin dublu-click:
+`porneste-showcase-hub.command` (pornește automat Docker, apoi suita, și
+deschide browserul) și `opreste-showcase-hub.command` (oprește suita,
+păstrând datele). Instalarea lor pe Desktop:
+
+```bash
+cd model-showcase/scripts
+cp porneste-showcase-hub.command opreste-showcase-hub.command ~/Desktop/
+chmod +x ~/Desktop/*.command
+```
+
+Detalii (carantină, personalizarea pictogramelor, localizarea proiectului):
+[scripts/README.md](scripts/README.md).
 
 ## Descărcarea modelelor este automată — nu dezarhivați niciun model manual
 
@@ -175,8 +200,11 @@ PUBLIC_GEND_URL=http://gpu-server.example.com:7862
 
 - **Porturi publice**: hub `7870`, DeepDESK imagini/video `7860`,
   DeepDESK audio `8000`, GenD `7862`, API vitale `7861`.
-- **Apple Silicon**: pentru `clinical-vitals-api` decomentați
-  `platform: linux/amd64` în `docker-compose.yml` dacă build-ul nativ eșuează.
+- **Apple Silicon**: avertismentul de platformă `linux/amd64` la
+  `clinical-vitals-api` este normal (emulare Rosetta/QEMU); dacă serviciul
+  nu pornește, decomentați `platform: linux/amd64` în `docker-compose.yml`
+  (detalii în [../docs/INSTALARE_COMPLETA.md](../docs/INSTALARE_COMPLETA.md)
+  §9.6).
 - **Timeout la GenD**: prima analiză descarcă modelul; creșteți
   `API_TIMEOUT_SECONDS` sau reîncercați după descărcarea completă.
 - **401 la audio**: cheia din `.env` / interfață nu coincide cu `API_KEY`

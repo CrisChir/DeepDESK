@@ -326,6 +326,45 @@ Atenție: comanda `docker compose down -v` șterge și volumele — deci și
 cache-urile modelelor (GenD, greutăți DeepDESK). Evitați `-v` dacă nu doriți
 descărcarea modelelor de la zero.
 
+### 10.1 Comenzi rapide pe Desktop (macOS)
+
+Pentru utilizatorii care nu folosesc linia de comandă, repository-ul include
+două comenzi rapide în `model-showcase/scripts/`:
+
+- `porneste-showcase-hub.command` — pornește automat Docker Desktop (dacă nu
+  rulează), apoi toate serviciile, așteaptă interfața web și deschide singură
+  browserul la adresa hub-ului;
+- `opreste-showcase-hub.command` — oprește toate serviciile, păstrând intacte
+  datele și modelele.
+
+Instalarea lor pe Desktop (o singură dată):
+
+```bash
+cd DeepDESK/model-showcase/scripts
+cp porneste-showcase-hub.command opreste-showcase-hub.command ~/Desktop/
+chmod +x ~/Desktop/porneste-showcase-hub.command ~/Desktop/opreste-showcase-hub.command
+```
+
+Observații:
+
+1. Scripturile caută automat proiectul în locațiile uzuale (inclusiv
+   `~/ai-showcase/DeepDESK/model-showcase`); dacă proiectul se află în altă
+   parte, editați lista `CAUTARI` din antetul scriptului sau setați variabila
+   `SHOWCASE_HUB_DIR`. Detalii complete: `model-showcase/scripts/README.md`.
+2. Dacă fișierele au fost descărcate din GitHub ca arhivă ZIP, la primul
+   dublu-click macOS le poate bloca; rezolvați cu click-dreapta pe pictogramă →
+   Open → Open (o singură dată per fișier) sau cu comanda
+   `xattr -d com.apple.quarantine ~/Desktop/*.command`.
+3. La primul dublu-click poate apărea o avertizare de securitate macOS pentru
+   scripturi noi create sau descărcate; rezolvarea este aceeași (click-dreapta
+   → Open → Open).
+4. Pictogramele celor două fișiere se pot personaliza: deschideți imaginea
+   dorită în Preview → Cmd+A → Cmd+C, apoi în Finder selectați scriptul →
+   Cmd+I → click pe iconița din colțul stânga-sus → Cmd+V.
+5. Pentru pornire complet automată după repornirea calculatorului: Docker
+   Desktop → Settings → General → bifați „Start Docker Desktop when you sign in
+   to your computer".
+
 ## 11. Securitate
 
 - Nu publicați și nu commit-uiți niciodată `.env`, `HF_TOKEN` sau cheile API.
