@@ -1,0 +1,147 @@
+# ============================================================
+# Showcase Hub — docker compose
+#
+# Structura de directoare așteptată (clonați toate repo-urile alături):
+#
+#   proiect/
+#   ├── DeepDESK/                       (github.com/CrisChir/DeepDESK)
+#   │   └── model-showcase/             (acest proiect — docker-compose.yml aici)
+#   ├── GenD/                           (github.com/CrisChir/GenD)
+#   └── simple_mcd_rppg/                (github.com/CrisChir/simple_mcd_rppg)
+#
+# Pornire completă (hub + toate backend-urile):
+#   docker compose --profile full up --build
+#
+# Doar hub-ul (backend-urile rulează deja în altă parte):
+#   docker compose up --build
+#
+# Combinații selective:
+#   docker compose --profile deepdesk --profile gend up --build
+#   docker compose --profile rppg up --build
+# ============================================================
+
+name: ai-model-showcase
+
+services:
+  # ------------------------------------------------------------------
+  # FRONT-END — hub-ul Gradio (port public 7870)
+  # ------------------------------------------------------------------
+  showcase-hub:
+    build:
+      context: .
+    image: showcase-hub:latest
+    container_name: showcase-hub
+    restart: unless-stopped
+    ports:
+      - "${HUB_PORT:-7870}:7870"
+    environment:
+      # Adresele backend-urilor, vazute din interiorul rețelei compose
+      # (numele serviciilor). Pentru backend-uri externe, suprascrieți în .env.
+      DEEPDESK_IMAGES_URL: ${DEEPDESK_IMAGES_URL:-http://deepdesk-images-video:7860}
+      DEEPDESK_AUDIO_URL: ${DEEPDESK_AUDIO_URL:-http://deepdesk-audio:8000}
+      GEND_URL: ${GEND_URL:-http://gend-app:7860}
+      RPPG_URL: ${RPPG_URL:-http://clinical-vitals-api:7861}
+      # Cheia API pentru /predict (DeepDESK audio)
+      DEEPDESK_AUDIO_API_KEY: ${DEEPDESK_AUDIO_API_KEY:-}
+      # Autentificare opțională pentru hub
+      HUB_USER: ${HUB_USER:-}
+      HUB_PASSWORD: ${HUB_PASSWORD:-}
+      # Linkuri publice afisate in UI (adrese vazute din browser)
+      PUBLIC_DEEPDESK_IMAGES_URL: ${PUBLIC_DEEPDESK_IMAGES_URL:-http://localhost:${DEEPDESK_IMAGES_PORT:-7860}}
+      PUBLIC_DEEPDESK_AUDIO_URL: ${PUBLIC_DEEPDESK_AUDIO_URL:-http://localhost:${DEEPDESK_AUDIO_PORT:-8000}}
+      PUBLIC_GEND_URL: ${PUBLIC_GEND_URL:-http://localhost:${GEND_PORT:-7862}}
+      PUBLIC_RPPG_API_URL: ${PUBLIC_RPPG_API_URL:-http://localhost:${RPPG_API_PORT:-7861}}
+      # Timeout pentru analizele lungi (secunde)
+      API_TIMEOUT_SECONDS: ${API_TIMEOUT_SECONDS:-900}
+
+  # ------------------------------------------------------------------
+  # BACKEND 1 — DeepDESK imagini & video (UniversalFakeDetect + Efficient ViT)
+  # repo: DeepDESK/docker (relativ la acest dosar: ../docker)
+  # ------------------------------------------------------------------
+  deepdesk-images-video:
+    build:
+      context: ../docker
+    image: deepdesk:latest
+    container_name: deepdesk-images-video
+    restart: unless-stopped
+    profiles: ["full", "deepdesk"]
+    ports:
+      - "${DEEPDESK_IMAGES_PORT:-7860}:7860"
+    volumes:
+      - deepdesk-weights:/data/weights
+
+  # ------------------------------------------------------------------
+  # BACKEND 2 — DeepDESK audio (wav2vec 2.0)
+  # repo: DeepDESK/container-audio (relativ la acest dosar: ../container-audio)
+  # ------------------------------------------------------------------
+  deepdesk-audio:
+    build:
+      context: ../container-audio
+    image: deepdesk-audio:latest
+    container_name: deepdesk-audio
+    restart: unless-stopped
+    profiles: ["full", "deepdesk", "audio"]
+    ports:
+      - "${DEEPDESK_AUDIO_PORT:-8000}:8000"
+    environment:
+      API_KEY: ${DEEPDESK_AUDIO_API_KEY:-change-me}
+      GRADIO_USER: ${DEEPDESK_AUDIO_GRADIO_USER:-}
+      GRADIO_PASSWORD: ${DEEPDESK_AUDIO_GRADIO_PASSWORD:-}
+
+  # ------------------------------------------------------------------
+  # BACKEND 3 — GenD (deepfake detection, WACV 2026)
+  # repo: GenD (Dockerfile-ul oficial din repo), clonat alături de DeepDESK
+  # ------------------------------------------------------------------
+  gend-app:
+    build:
+      context: ../../GenD
+      dockerfile: docker/Dockerfile
+    image: gend-app:latest
+    container_name: gend-app
+    restart: unless-stopped
+    profiles: ["full", "gend"]
+    ports:
+      - "${GEND_PORT:-7862}:7860"
+    environment:
+      HF_TOKEN: ${HF_TOKEN:-}
+      PORT: "7860"
+      GRADIO_SERVER_NAME: "0.0.0.0"
+      GRADIO_ANALYTICS_ENABLED: "False"
+      API_CORS_ORIGINS: "*"
+    volumes:
+      - gend-hf-cache:/cache/huggingface
+      - gend-torch-cache:/cache/torch
+
+  # ------------------------------------------------------------------
+  # BACKEND 4 — MCD-RPPG semne vitale (API REST)
+  # repo: simple_mcd_rppg/sliding_window_model, clonat alături de DeepDESK
+  # Aceeași imagine ca aplicația clinică Gradio, dar cu entrypoint de API.
+  # Notă: pe Apple Silicon decomentați `platform: linux/amd64`.
+  # ------------------------------------------------------------------
+  clinical-vitals-api:
+    build:
+      context: ../../simple_mcd_rppg/sliding_window_model
+    image: clinical-vitals-app:latest
+    container_name: clinical-vitals-api
+    restart: unless-stopped
+    profiles: ["full", "rppg"]
+    command: python /app/api_server.py
+    ports:
+      - "${RPPG_API_PORT:-7861}:7861"
+    volumes:
+      - vitals-data:/app/data
+    environment:
+      PYTHONUNBUFFERED: "1"
+      PYTHONDONTWRITEBYTECODE: "1"
+      API_HOST: "0.0.0.0"
+      API_PORT: "7861"
+      MODEL_DIR: /app/sliding_window_model/models
+      FACE_MODEL_PATH: /app/face_landmarker.task
+      MAX_FRAMES: "450"
+      CUDA_DEVICE: "0"
+
+volumes:
+  deepdesk-weights:
+  gend-hf-cache:
+  gend-torch-cache:
+  vitals-data:
