@@ -118,7 +118,11 @@ services:
   # Aceeași imagine ca aplicația clinică Gradio, dar cu entrypoint de API.
   # Checkpoint-urile (MODEL_DIR) sunt montate read-only din clona locală,
   # deci sunt disponibile automat, fără copiere manuală în container.
-  # Notă: pe Apple Silicon decomentați `platform: linux/amd64`.
+  # Notă Apple Silicon: imaginea de bază PyTorch CUDA este publicată doar
+  # pentru linux/amd64. Avertismentul „platform does not match" de la
+  # `docker compose up` este NORMAL — imaginea rulează prin emulare
+  # (Rosetta/QEMU). Dacă serviciul nu pornește, decomentați linia de mai jos:
+  # platform: linux/amd64
   # ------------------------------------------------------------------
   clinical-vitals-api:
     build:

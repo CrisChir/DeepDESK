@@ -65,6 +65,9 @@ git --version
 - Windows: instalați cu backend WSL2 (installerul vă ghidează).
 - Pe Mac-uri cu 8–16 GB RAM: Settings → Resources → Memory — alocați cel puțin
   8 GB Docker-ului.
+- Pe Mac-uri Apple Silicon: Settings → General — activați „Use Rosetta for
+  x86_64/amd64 emulation on Apple silicon" (necesar pentru serviciul rPPG,
+  a se vedea secțiunea 9.6).
 
 **Linux** — instalați Docker Engine și pluginul Compose v2 conform
 <https://docs.docker.com/engine/install/> (secțiunea pentru distribuția
@@ -78,7 +81,7 @@ docker compose version
 docker run --rm hello-world
 ```
 
-Dacă ultima comandă afișează „Hello from Docker!”, instalarea este corectă.
+Dacă ultima comandă afișează „Hello from Docker!", instalarea este corectă.
 
 ## 4. Pasul 3 — Clonarea repository-urilor
 
@@ -259,10 +262,37 @@ actualizați `.env` și reporniți:
 docker compose up -d --force-recreate deepdesk-audio
 ```
 
-### 9.6 Apple Silicon
+### 9.6 Apple Silicon — avertisment de platformă la `clinical-vitals-api`
 
-Dacă build-ul nativ al `clinical-vitals-api` eșuează, decomentați
-`platform: linux/amd64` în secțiunea serviciului din `docker-compose.yml`.
+La pornire, Docker poate afișa mesajul:
+
+```
+! clinical-vitals-api  The requested image's platform (linux/amd64) does not match
+  the host platform (linux/arm64)
+```
+
+Acesta este un **avertisment, nu o eroare**: imaginea de bază
+`pytorch/pytorch:2.0.1-cuda11.7-cudnn8-runtime` este publicată doar pentru
+`linux/amd64`, iar pe Apple Silicon Docker o rulează prin emulare (Rosetta/QEMU).
+Verificați starea serviciului:
+
+```bash
+docker compose --profile full ps
+```
+
+Dacă `clinical-vitals-api` este **Up**, nu trebuie făcut nimic — analizele rPPG
+vor fi doar mai lente decât pe un computer cu procesor nativ amd64. Dacă
+serviciul nu pornește (se repornește la nesfârșit sau nu apare deloc):
+
+1. Decomentați linia `# platform: linux/amd64` din secțiunea serviciului
+   `clinical-vitals-api` din `docker-compose.yml` (ștergeți doar `# ` din fața ei).
+2. Activați în Docker Desktop → Settings → General opțiunea
+   „Use Rosetta for x86_64/amd64 emulation on Apple silicon".
+3. Reluați construirea:
+
+```bash
+docker compose --profile full up -d --build clinical-vitals-api
+```
 
 ### 9.7 Comenzi de diagnostic
 
