@@ -116,6 +116,8 @@ services:
   # BACKEND 4 — MCD-RPPG semne vitale (API REST)
   # repo: simple_mcd_rppg/sliding_window_model, clonat alături de DeepDESK
   # Aceeași imagine ca aplicația clinică Gradio, dar cu entrypoint de API.
+  # Checkpoint-urile (MODEL_DIR) sunt montate read-only din clona locală,
+  # deci sunt disponibile automat, fără copiere manuală în container.
   # Notă: pe Apple Silicon decomentați `platform: linux/amd64`.
   # ------------------------------------------------------------------
   clinical-vitals-api:
@@ -130,6 +132,7 @@ services:
       - "${RPPG_API_PORT:-7861}:7861"
     volumes:
       - vitals-data:/app/data
+      - ../../simple_mcd_rppg/sliding_window_model/models:/app/sliding_window_model/models:ro
     environment:
       PYTHONUNBUFFERED: "1"
       PYTHONDONTWRITEBYTECODE: "1"

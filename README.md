@@ -10,6 +10,14 @@ interfață web Gradio:
 | **Imagini generate de AI** | Clasificare REAL/FAKE pentru imagini GAN/difuziune | UniversalFakeDetect (CLIP ViT-L/14 + strat liniar) — [Ojha et al., CVPR 2023](https://arxiv.org/abs/2302.10174) | [`docker/`](docker/) |
 | **Deepfake video (face-swap)** | Detectarea schimbării de față în cadre și videoclipuri (DFDC) | Efficient ViT (EfficientNet-B0 + ViT) — [Coccomini et al., ICIAP 2021](https://arxiv.org/abs/2107.02612) | [`docker/`](docker/) |
 
+Suita poate fi rulată în întregime prin **Showcase Hub** ([`model-showcase/`](model-showcase/)) —
+un front-end Gradio containerizat care unifică cele trei detectoare de mai sus cu încă două
+modele din repository-urile înrudite: **GenD** (deepfake detection generalizat, WACV 2026 —
+[GenD](https://github.com/CrisChir/GenD)) și **MCD-RPPG** (estimarea pulsului și a semnelor
+vitale din videoclip facial — [simple_mcd_rppg](https://github.com/CrisChir/simple_mcd_rppg)).
+Ghidul complet de instalare a întregii suita de la zero, pe un calculator nou, este
+[docs/INSTALARE_COMPLETA.md](docs/INSTALARE_COMPLETA.md).
+
 ---
 
 ## Cuprins
@@ -53,7 +61,13 @@ DeepDESK/
 │   │   └── models/             # definițiile modelelor (derivate din codul original)
 │   ├── Dockerfile / Dockerfile.gpu
 │   └── requirements.txt
+├── model-showcase/             # Showcase Hub — front-end unificat (DeepDESK + GenD + MCD-RPPG)
+│   ├── app/                    # interfața Gradio și clienții HTTP ai hub-ului
+│   ├── docker-compose.yml      # hub + toate cele 4 backend-uri (profiluri)
+│   ├── Dockerfile / requirements.txt / .env.example
+│   └── README.md
 ├── docs/
+│   ├── INSTALARE_COMPLETA.md   # instalarea întregii suite de la zero (hub + toate backend-urile)
 │   ├── INSTALLARE_SI_UTILIZARE.md   # ghid complet pentru detectoarele de imagini/video
 │   └── GHID_AUDIO_DEEPFAKE.md       # ghid complet pentru detectorul audio
 └── notebooks/                  # notebook-uri Jupyter interactive
@@ -79,6 +93,9 @@ Pentru GPU pe oricare componentă: driver NVIDIA + [nvidia-container-toolkit](ht
 git clone https://github.com/CrisChir/DeepDESK.git
 cd DeepDESK
 ```
+
+Pentru instalarea întregii suite (DeepDESK + GenD + MCD-RPPG + Showcase Hub) pe un
+calculator nou, urmați [docs/INSTALARE_COMPLETA.md](docs/INSTALARE_COMPLETA.md).
 
 ## Componenta audio (container-audio)
 
@@ -192,12 +209,17 @@ Detaliile complete (pregătirea datasetului Kaggle, publicarea pe Hugging Face) 
 
 ## Documentație detaliată
 
+- [docs/INSTALARE_COMPLETA.md](docs/INSTALARE_COMPLETA.md) — instalarea întregii suite
+  (DeepDESK + GenD + MCD-RPPG + Showcase Hub) de la zero, pe un calculator nou: cerințe,
+  Git/Docker, clonare, configurare `.env`, pornire, verificare și depanare.
 - [docs/GHID_AUDIO_DEEPFAKE.md](docs/GHID_AUDIO_DEEPFAKE.md) — ghidul complet al componentei
   audio: instalare pas cu pas, configurare, API, CLI, GPU, retrainuire, securitate, depanare.
 - [docs/INSTALLARE_SI_UTILIZARE.md](docs/INSTALLARE_SI_UTILIZARE.md) — ghidul complet al
   detectoarelor de imagini/video: referință integrală a API-ului, greutăți, performanță, licențe.
 - [container-audio/README.md](container-audio/README.md) și [docker/README.md](docker/README.md) —
   readme-uri specifice fiecărei componente.
+- [model-showcase/README.md](model-showcase/README.md) — documentația front-end-ului
+  Showcase Hub (taburi, variabile de mediu, profiluri Docker Compose).
 
 ## Performanță și limitări
 
